@@ -1,12 +1,12 @@
 local ffi = require "ffi"
 
 local library_path = (function()
-  local dirname = string.sub(debug.getinfo(1).source, 2, #"/fzf_lib.lua" * -1)
-  if package.config:sub(1, 1) == "\\" then
-    return dirname .. "../build/libfzf.dll"
-  else
-    return dirname .. "../build/libfzf.so"
-  end
+    local dirname = string.sub(debug.getinfo(1).source, 2, #"/fzf_lib.lua" * -1)
+    if package.config:sub(1, 1) == "\\" then
+        return dirname .. "../zig-out/bin/libfzf.dll"
+    else
+        return dirname .. "../zig-out/bin/libfzf.so"
+    end
 end)()
 local native = ffi.load(library_path)
 
@@ -44,42 +44,42 @@ ffi.cdef [[
 local fzf = {}
 
 fzf.get_score = function(input, pattern_struct, slab)
-  return native.fzf_get_score(input, pattern_struct, slab)
+    return native.fzf_get_score(input, pattern_struct, slab)
 end
 
 fzf.get_pos = function(input, pattern_struct, slab)
-  local pos = native.fzf_get_positions(input, pattern_struct, slab)
-  if pos == nil then
-    return
-  end
+    local pos = native.fzf_get_positions(input, pattern_struct, slab)
+    if pos == nil then
+        return
+    end
 
-  local res = {}
-  for i = 1, tonumber(pos.size) do
-    res[i] = pos.data[i - 1] + 1
-  end
-  native.fzf_free_positions(pos)
+    local res = {}
+    for i = 1, tonumber(pos.size) do
+        res[i] = pos.data[i - 1] + 1
+    end
+    native.fzf_free_positions(pos)
 
-  return res
+    return res
 end
 
 fzf.parse_pattern = function(pattern, case_mode, fuzzy)
-  case_mode = case_mode == nil and 0 or case_mode
-  fuzzy = fuzzy == nil and true or fuzzy
-  local c_str = ffi.new("char[?]", #pattern + 1)
-  ffi.copy(c_str, pattern)
-  return native.fzf_parse_pattern(case_mode, false, c_str, fuzzy)
+    case_mode = case_mode == nil and 0 or case_mode
+    fuzzy = fuzzy == nil and true or fuzzy
+    local c_str = ffi.new("char[?]", #pattern + 1)
+    ffi.copy(c_str, pattern)
+    return native.fzf_parse_pattern(case_mode, false, c_str, fuzzy)
 end
 
 fzf.free_pattern = function(p)
-  native.fzf_free_pattern(p)
+    native.fzf_free_pattern(p)
 end
 
 fzf.allocate_slab = function()
-  return native.fzf_make_default_slab()
+    return native.fzf_make_default_slab()
 end
 
 fzf.free_slab = function(s)
-  native.fzf_free_slab(s)
+    native.fzf_free_slab(s)
 end
 
 return fzf
